@@ -58,7 +58,10 @@ passport.use(
         //third option lets us send or redirect the user 
         //to a route after they grant us the permission.
         //we handle this route in index.js
-        callbackURL: '/auth/google/callback'
+        callbackURL: '/auth/google/callback',
+        //telling GoogleStrategy to trust any proxies
+        //it encounters(like the heroku proxy)
+        proxy: true
         //the callback is called after we get the actual user profile
     }, (accessToken, refreshToken, profile, done) => {
         // //access token tells google what permissions the 
