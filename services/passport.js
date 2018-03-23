@@ -63,7 +63,9 @@ passport.use(
         //it encounters(like the heroku proxy)
         proxy: true
         //the callback is called after we get the actual user profile
-    }, (accessToken, refreshToken, profile, done) => {
+    },
+    // using async/await syntax 
+    async (accessToken, refreshToken, profile, done) => {
         // //access token tells google what permissions the 
         // //user gave us in the past
         // console.log('access token', accessToken);
@@ -79,23 +81,21 @@ passport.use(
         //user document again if it already has the same googleId
         //it returns null if no doc is found, else returns the doc.
         //alternative is using mongoose validators(unique:true) in schema.
-        User.findOne({ googleId: profile.id })
-            .then((existingUser) => {
-                if (existingUser) {
-                   // we already have a record with the given profile.id
-                   //we call done(2 args)(err, doc) to tell passport that we are done creating
-                   //the user and that it should proceed with the authentication
-                   //flow. null means that there were no errors here
-                   done(null, existingUser);
-                } else {
-                    // we don't have a user record with this ID; make a new record
-                    //we use a model class to create a new instance(record/document) 
-                    //of a user and save it, here of all the places, because this is where the googleId
-                    //is, in profile.id(which is our unique identifier)
-                    new User({ googleId: profile.id })
-                        .save()
-                        .then((user) => done(null, user));
-                }
-            });
+        const existingUser = await User.findOne({ googleId: profile.id });
+        
+        if (existingUser) {
+            // we already have a record with the given profile.id
+            //we call done(2 args)(err, doc) to tell passport that we are done creating
+            //the user and that it should proceed with the authentication
+            //flow. null means that there were no errors here
+            return done(null, existingUser);
+        }
+        
+        // we don't have a user record with this ID; make a new record
+        //we use a model class to create a new instance(record/document) 
+        //of a user and save it, here of all the places, because this is where the googleId
+        //is, in profile.id(which is our unique identifier)
+        const user = await new User({ googleId: profile.id }).save();
+        done(null, user);
     })
 );

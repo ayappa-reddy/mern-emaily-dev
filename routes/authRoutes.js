@@ -11,18 +11,37 @@ module.exports = (app) => {
     //scope(permissions)(2nd arg) specifies to google servers what
     //access we want to have inside the users profile(here profile
     //and email).Google has many scopes apart from these(contacts, images etc)
-    app.get(
-        '/auth/google',
-        passport.authenticate('google', {
-            scope: ['profile', 'email']
-        })
-    );
+    app.get("/auth/google", passport.authenticate("google", {
+        scope: ["profile", "email"],
+        //prompts the user to select an account every
+        //time they login
+        prompt: "select_account"
+      }));
 
     //passport handles the callback instead of us
     //worrying about the logic.
     //after getting the (code), it gets the actual user profile
     //instead of routing the user for authentication like above
-    app.get('/auth/google/callback', passport.authenticate('google'));
+    //passport.authenticate('google') is a middleware
+    //This middleware is a function that takes the incoming request,
+    //further authenticates the user(in this case, it takes the code
+    //out of the url and then goes and fetches the user profile and then
+    //it calls our callback in GoogleStrategy)
+    //After all the google authentication stuff, it then passes
+    //on the request to the next middleware in the flow
+    //Here, once the passport.authenticate('google) middleware
+    //is done with the request, it passes the request on to the next helper
+    //in the chain which in this case is the (req, res) arrow function,
+    //to redirect the user to '/surveys' route.
+    app.get(
+        '/auth/google/callback', 
+        passport.authenticate('google'),
+        (req, res) => {
+            //res.redirect() redirects the request to another 
+            //route in the express app
+            res.redirect('/surveys');
+        } 
+    );
 
     //log out users
     app.get('/api/logout', (req, res) => {
@@ -37,7 +56,10 @@ module.exports = (app) => {
         //Here req.user is undefined because we no longer have
         //the user because of req.logout(). It i destroyed
         //the moment we call logout()
-        res.send(req.user);
+        //an empty string
+        //res.send(req.user);
+        //redirects the user to the root('/') route of our app
+        res.redirect('/');
     });
     
     //after the user logs in with oAuth(the final part of login authentication flow)
